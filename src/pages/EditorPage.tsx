@@ -34,7 +34,7 @@ export default function EditorPage() {
     const lastSaved = useGameStore(s => s.lastSaved);
 
     // Load project data once we have projectId and user
-    
+
     useEffect(() => {
         if (!projectId || !user) return;
 
@@ -68,7 +68,13 @@ export default function EditorPage() {
             }
         };
 
+
         loadProject();
+
+        useGameStore.getState().setProjectId(projectId!);
+
+
+
     }, [projectId, user, setConfig]);
 
     // Auto-save when config changes (debounce in store recommended in production)
@@ -104,8 +110,10 @@ export default function EditorPage() {
     }
 
     const addSprite = () => {
+        const newId = useGameStore.getState().getNextSpriteId();
+
         const newSprite = {
-            id: `sprite-${Date.now()}`,
+            id: newId,
             type: 'sprite' as const,
             asset: 'bird', // default placeholder
             position: { x: 300 + Math.random() * 200, y: 200 + Math.random() * 200 },
@@ -212,19 +220,21 @@ export default function EditorPage() {
                 {/* Main Canvas */}
                 <main className="flex-1 flex items-center justify-center bg-black/40 relative overflow-hidden">
                     {isPreviewMode ? (
-                        <GamePreview
-                            isPreviewMode={isPreviewMode}
-                            onGameOver={() => {
-                                alert('Game Over! Check collisions & logic.');
-                                setIsPreviewMode(false);
-                            }}
-                        />
+                        <div className="w-full h-full flex items-center justify-center">
+                            <GamePreview
+                                isPreviewMode={isPreviewMode}
+                                onGameOver={() => {
+                                    alert('Game Over!');
+                                    setIsPreviewMode(false);
+                                }}
+                            />
+                        </div>
                     ) : (
                         <div
                             className="relative border-4 border-dashed border-indigo-500/40 rounded-2xl overflow-hidden shadow-2xl shadow-indigo-500/10 bg-gray-900/30 backdrop-blur-sm"
                             style={{
-                                width: `${config.settings?.width ?? 800}px`,
-                                height: `${config.settings?.height ?? 600}px`,
+                                width: `${config.settings.width}px`,
+                                height: `${config.settings.height}px`,
                                 maxWidth: '90vw',
                                 maxHeight: '80vh',
                             }}
@@ -285,7 +295,15 @@ export default function EditorPage() {
                                 {/* Add more fields: Y, scale, rotation, gravity, etc. */}
                             </div>
 
-                            <button className="w-full bg-red-600/80 hover:bg-red-700 p-4 rounded-xl font-medium transition-all hover:scale-105 shadow-md shadow-red-500/30">
+                            <button
+                                onClick={() => {
+                                    if (selectedEntityId) {
+                                        useGameStore.getState().removeEntity(selectedEntityId);
+                                        // Optional: toast.success('Entity deleted');
+                                    }
+                                }}
+                                className="w-full bg-red-600/80 hover:bg-red-700 p-4 rounded-xl font-medium transition-all hover:scale-105 shadow-md shadow-red-500/30"
+                            >
                                 Delete Entity
                             </button>
 
